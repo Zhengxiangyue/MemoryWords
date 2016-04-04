@@ -21,9 +21,16 @@
         </div>
     </header>
 
-    <br><br><br><br><br><br><br><br>
+    <br>
 
     <div class="main-body">
+
+        <div class="col-md-12 col-sm-12" style="text-align: center">
+            <img src="<?php echo base_url('static/img/main.jpg')?>">
+        </div>
+        <br><br>
+
+
         <div class="col-md-12 col-sm-12">
             <div class="row">
                 <div class="col-md-4 col-sm-4">

@@ -40,7 +40,7 @@ class Word extends CI_Controller{
 
     private $user_memory_words_day_key = 'CACHE_USER_MEMORY_WORDS_DAY_KEY_';//USERID
 
-    //储存用户背单词天数,顺序模式时背到哪个词,
+    //储存用户背单词天数,顺序模式时背到哪个词,刷了多少张单词卡片
     private $user_info_key = 'CACHE_USER_INFO_KEY_';//.USERID
 
     /**
@@ -158,7 +158,11 @@ class Word extends CI_Controller{
             );
         }
 
+        $ban_list = $this->cache->get($this->user_ban_list_key.$user);
+        $ban_array = $this->word_model->get_words_by_id_array(unserialize($ban_list));
+
         $days = $user_info_array['days'];
+        $cards_num = $user_info_array['cards_num'];
 
         $if_accomplish_today = date('Y-m-d') > date('Y-m-d',strtotime($user_info_array['last_accomplish_date'])) ? false:true;
 
@@ -168,6 +172,8 @@ class Word extends CI_Controller{
             'user_id' => $user,
             'days' => $days,
             'if_accomplish_today' => $if_accomplish_today,
+            'cards_num' => $cards_num,
+            'ban_list' => $ban_array,
         );
         $this->load->view('word/word_ini',$data);
     }
@@ -224,11 +230,16 @@ class Word extends CI_Controller{
      */
     public function word(){
         $user_id = $this->check_login();
+
         if(!$user_id){
             return $this->redirect('word/index');
         }
 
         $word_num = $this->input->post('words_num');
+
+        if(empty($word_num)){
+            return $this->redirect('word/index');
+        }
 
         $word_list = $this->word_model->get_words_by_id_array($this->recommend_id_array($user_id,$word_num));
 
@@ -349,15 +360,6 @@ class Word extends CI_Controller{
         return $this->send_json(true);
     }
 
-//    public function get_current_ban_list(){
-//
-//        $user_id = $this->input->post('username');
-//        $ban_list = $this->cache->get($this->user_ban_list_key.$user_id);
-//        $ban_array = $this->word_model->get_words_by_id_array(unserialize($ban_list));
-//
-//        return $ban_array;
-//    }
-
     /**
      *返回banlist的html内容
      */
@@ -389,6 +391,8 @@ class Word extends CI_Controller{
 
     public function toady_accomplish_add_days(){
         $user_id = $this->input->post('username');
+        $cards_num_plus = $this->input->post('cards_num');
+
         if(empty($user_id)){
             exit('用户超时,请重新登陆');
         }
@@ -409,6 +413,9 @@ class Word extends CI_Controller{
 
             $user_info_array['days'] += 1;
         }
+
+        $user_info_array['cards_num'] += $cards_num_plus;
+
         $this->cache->save($this->user_info_key.$user_id,serialize($user_info_array),$this->cache_expire_time());
         return $this->send_json(true,$user_info_array['last_accomplish_date']);
     }

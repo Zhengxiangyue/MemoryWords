@@ -65,7 +65,7 @@
 
                             <div style="text-align: center">
                                 <h1 style="color: #2aabd2">我坚持了<?php echo $days;?>天背我的词汇表</h1>
-                                <h1>累计刷了 张单词卡片</h1>
+                                <h1>累计刷了<?php echo '87';//$cards_num?>张单词卡片</h1>
                             </div>
 
                             <br>
@@ -75,14 +75,19 @@
                     <div class="row">
                         <div class="col-md-2 col-lg-2 col-sm-2"></div>
                         <div class="col-md-8 col-lg-8 col-sm-8" style="text-align: center">
-
-
                             <form method="post"  action="<?php echo base_url('word/word')?>">
 
                                 <div class="btn-group">
+
+                                    <?php if($if_accomplish_today){?>
+                                    <a id="word-num" class="btn btn-default">
+                                        今天我还要背
+                                    </a>
+                                    <?php }else{?>
                                     <a id="word-num" class="btn btn-default">
                                         今天我要背
                                     </a>
+                                    <?php }?>
                                     <button data-toggle="dropdown" class="btn btn-default dropdown-toggle">
                                         <span class="caret"></span>
                                     </button>
@@ -140,7 +145,47 @@
                 </div>
 
                 <div class="tab-pane" id="ban_list">
-                    hahahha
+                    <br>
+                    <div class="row">
+                        <div class="col-md-2 col-sm-2 col-lg-2"></div>
+                        <div class="col-md-8 col-sm-8 col-lg-8">
+                            <div class="col-md-12">
+                                <table class="table">
+                                    <thead>
+                                    <tr>
+                                        <th>
+                                            单词
+                                        </th>
+                                        <th>
+                                            词义
+                                        </th>
+                                        <th>
+                                            操作
+                                        </th>
+                                    </tr>
+                                    </thead>
+                                    <?php if(!empty($ban_list)){?>
+                                        <tbody id="tbody_ban_list">
+                                        <?php foreach($ban_list as $num => $word):?>
+                                            <tr>
+                                                <td>
+                                                    <?php echo $word->Word;?>
+                                                </td>
+                                                <td>
+                                                    <?php echo $word->meaning;?>
+                                                </td>
+                                                <td>
+                                                    Default
+                                                </td>
+                                            </tr>
+                                        <?php endforeach;?>
+                                        </tbody>
+                                    <?php }?>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-2 col-lg-2"></div>
+                    </div>
                 </div>
 
                 <div class="tab-pane" id="collect_list">
@@ -158,7 +203,7 @@
 
 
 
-<?php require_once("footer.php");?>
+<?php //require_once("footer.php");?>
 
 </body>
 

@@ -69,7 +69,7 @@
                             <div class="row">
 
                                 <!-- 单词卡片 -->
-                                <div id="parent-word" class="col-sm-12 col-lg-12 col-md-12" style="background-color: #eeeeee;text-align:center;max-height: 230px; min-height: 230px;padding:40px" >
+                                <div id="parent-word" class="col-sm-12 col-lg-12 col-md-12" style="background-color: #eeeeee;text-align:center;max-height: 230px; min-height: 230px;padding:40px;min-width: 420px" >
                                     <?php foreach($word_list as $num => $word):?>
                                         <div id="item-<?php echo $num;?>" class="<?php echo $num==0?'now-display':'';?>" style="<?php echo $num==0?'display:block':'display:none';?>">
                                             <p class="big-word" style="font-size: 4em;color: #2fa8ec">
@@ -78,6 +78,7 @@
                                             <p style="font-size: 1.1em;color:#999999">
                                                 <?php echo $word->meaning;?>
                                             </p>
+
                                             <i class="fa fa-2x fa-ban" onclick="clickBanButton('<?php echo $word->ID?>')" style="color:#aaaaaa;left:82%;top:80%;position: absolute;cursor:pointer;"></i>
 
                                             <i class="fa fa-2x fa-plus-square-o" onclick="clickAddButton()" style="color:#999999;left:90%;top:80%;position: absolute;cursor:pointer;"></i>
@@ -103,7 +104,7 @@
                                             </div>
                                             <div id="panel-element-89657" class="progress panel-collapse collapse" style="max-height:20px;margin:2px;background: #ddd">
                                                 <div class="progress" style="height:100%">
-                                                    <div id="progress-div" class="progress-bar progress-success" style="width:0%;text-align: left;">
+                                                    <div id="progress-div" class="progress-bar progress-success" style="width:<?php echo 100*(double)(1.0/$word_num)?>%;text-align: left;">
                                                         <p id="progress-p" style="color: #eeeeee;margin-left: 2px">1/<?php echo $word_num?></p>
                                                     </div>
                                                 </div>
@@ -269,6 +270,8 @@
 </script>
 
 <script>
+
+    //从有道api获取词义并查询,显示单词与词义
     function updateContent()
     {
         var content = document.getElementById("subject").value;
@@ -301,6 +304,7 @@
         });
     }
 
+    //用不到,点击登录
     function clickSignIn(){
         var input_user_name = document.getElementById("login-username").value;
         var input_password = document.getElementById("login-password").value;
@@ -321,6 +325,7 @@
         });
     }
 
+    //点击登出
     function clickLogOut(){
         $.ajax({
             url: "<?PHP echo base_url('word/logout')?>",
@@ -335,6 +340,7 @@
         });
     }
 
+    //点击记住了按钮
     function clickButtonBye(){
 
         var curElement = document.getElementsByClassName('now-display');
@@ -388,6 +394,7 @@
         }
     }
 
+    //点击下一个按钮
     function clickButtonNext(){
         var curElement = document.getElementsByClassName('now-display');
         curElement = curElement[0];
@@ -427,6 +434,7 @@
         }
     }
 
+    //点击前一个单词按钮
     function clickButtonPrev(){
         var curElement = document.getElementsByClassName('now-display');
         curElement = curElement[0];
@@ -453,6 +461,7 @@
         }
     }
 
+    //完成任务时与后台沟通的方法
     function accomplish(){
         $.ajax({
             url: "<?PHP echo base_url('word/toady_accomplish_add_days')?>",
@@ -475,17 +484,42 @@
         });
     }
 
+    //完成任务时改变卡片内容
     function change_card_success_content(){
         document.getElementById('parent-word').innerHTML="<h1>恭喜您,今天的任务已经完成!</h1>"
     }
 
+    //完成任务时改变想离开按钮内容
     function block_want_to_leave(){
         document.getElementById('want-to-leave-button').innerHTML='完成任务';
         document.getElementById('want-to-leave').onclick='return true;';
     }
 
+    function addCardsNum(){
+        $.ajax({
+            url: "<?PHP echo base_url('word/add_cards_num')?>",
+            type: 'post',
+            dataType: 'JSON',//here
+            data: {
+                username:'<?php echo $user_id;?>',
+            },
+            success: function (data) {
+                if(data.code == 0){
+                    alert('数量更新成功');
+                }else{
+                    alert(data.msg);
+                }
+            }
+        });
+    }
+
+    //点击想离开按钮提醒用户没有完成任务
     function want_to_leave(){
-        return confirm('您当前的任务还没有完成,确定要离开吗?');
+        if(confirm('您当前的任务还没有完成,确定要离开吗?')){
+            addCardsNum();
+            return true;
+        }
+        return false;
     }
 
     function addToMyList(){
