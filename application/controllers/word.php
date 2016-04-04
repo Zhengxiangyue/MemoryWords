@@ -30,15 +30,11 @@ class Word extends CI_Controller{
      */
     private $user_study_history_list_key = 'CACHE_USER_STUTY_HISTORY_'; // .USERID
 
-    private $user_days_of_memory_word_key = 'CACHE_USER_DAYS_OF_MEMORY_WORD_'; // .USERID_REPERTORY
-
     private $user_ban_list_key = 'CACHE_USER_BAN_LIST_'; //.USERID
 
     private $user_collect_list_key = 'CACHE_USER_COLLECT_LIST_'; //.USERID
 
     private $user_words_repertory_key = 'CACHE_USER_WORDS_REPERTORY_'; //USERID
-
-    private $user_memory_words_day_key = 'CACHE_USER_MEMORY_WORDS_DAY_KEY_';//USERID
 
     //储存用户背单词天数,顺序模式时背到哪个词,
     private $user_info_key = 'CACHE_USER_INFO_KEY_';//.USERID
@@ -469,7 +465,7 @@ class Word extends CI_Controller{
 
         $de_check_key = strtotime($this->deCode($check_key));
 
-        if(!empty($de_check_key) && !empty($cookie_user) && strtotime(date('Y-m-d')) - $de_check_key  < 3600*24*30 ){
+        if(!empty($de_check_key) && !empty($cookie_user) && strtotime(date('Y-m-d')) - $de_check_key  < $this->cookie_expire_time() ){
             return $cookie_user;
         }
         return false;
