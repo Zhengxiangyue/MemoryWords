@@ -104,14 +104,22 @@
                         <p style="color: #eeeeee;margin-left: 2px">进度:12/50</p>
                     </div>
                 </div>
-
-
-
             </div>
             <div class="col-md-1 col-lg-1"></div>
         </div>
 
-        <br><br><br>
+        <br><br>
+        <div class="row">
+            <div class="col-md-12 col-sm-12 col-lg-12" style="text-align: center">
+                <div class="col-md-5 col-sm-5 col-lg-5"></div>
+                    <div class="col-md-2 col-sm-2 col-lg-2">
+                        <a id="want-to-leave" onclick="return want_to_leave();" href='<?php echo base_url('word/index')?>'><button id="want-to-leave-button" class="btn btn-danger btn-block" >不想背了</button></a>
+                    </div>
+                <div class="col-md-5 col-sm-5 col-lg-5"></div>
+            </div>
+        </div>
+
+        <br>
 
         <div class="row" style="text-align:center;color: #aaaaaa">
             <div class="col-md-12 col-lg-12 "><p>键盘右:一会儿再背  键盘下:记住了  键盘左:上一个单词</p></div>

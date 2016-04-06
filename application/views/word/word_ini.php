@@ -65,7 +65,7 @@
 
                             <div style="text-align: center">
                                 <h1 style="color: #2aabd2">我坚持了<?php echo $days;?>天背我的词汇表</h1>
-                                <h1>累计刷了<?php echo '87';//$cards_num?>张单词卡片</h1>
+                                <h1>累计刷了<?php echo '0';//$cards_num?>张单词卡片</h1>
                             </div>
 
                             <br>

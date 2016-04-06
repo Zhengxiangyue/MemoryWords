@@ -81,7 +81,7 @@
 
                                             <i class="fa fa-2x fa-ban" onclick="clickBanButton('<?php echo $word->ID?>')" style="color:#aaaaaa;left:82%;top:80%;position: absolute;cursor:pointer;"></i>
 
-                                            <i class="fa fa-2x fa-plus-square-o" onclick="clickAddButton()" style="color:#999999;left:90%;top:80%;position: absolute;cursor:pointer;"></i>
+                                            <i class="fa fa-2x fa-plus-square-o" onclick="clickAddButton('<?php echo $word->ID?>')" style="color:#999999;left:90%;top:80%;position: absolute;cursor:pointer;"></i>
 
                                         </div>
                                     <?php endforeach;?>
@@ -463,6 +463,15 @@
 
     //完成任务时与后台沟通的方法
     function accomplish(){
+        add_success_days();
+
+        modify_package_index();
+        change_card_success_content();
+        block_want_to_leave();
+    }
+
+    //增加完成天数
+    function add_success_days(){
         $.ajax({
             url: "<?PHP echo base_url('word/toady_accomplish_add_days')?>",
             type: 'post',
@@ -473,10 +482,6 @@
             success: function (data) {
                 if(data.code == 0){
                     alert('同步完成!');
-
-                    change_card_success_content();
-                    block_want_to_leave();
-
                 }else{
                     alert(data.msg);
                 }
@@ -487,6 +492,26 @@
     //完成任务时改变卡片内容
     function change_card_success_content(){
         document.getElementById('parent-word').innerHTML="<h1>恭喜您,今天的任务已经完成!</h1>"
+    }
+
+    //改变单词库下一次出现单词的位置
+    function modify_package_index(){
+        $.ajax({
+            url: "<?PHP echo base_url('word/today_accomplish_modify_package_index')?>",
+            type: 'post',
+            dataType: 'JSON',//here
+            data: {
+                username:'<?php echo $user_id;?>',
+                cards_num:'<?php echo $word_num?>'
+            },
+            success: function (data) {
+                if(data.code == 0){
+                    alert('包index同步完成!');
+                }else{
+                    alert(data.msg);
+                }
+            }
+        });
     }
 
     //完成任务时改变想离开按钮内容
@@ -546,19 +571,18 @@
         });
     }
 
-    function clickAddButton(){
+    function clickAddButton(add_word){
         $.ajax({
             url: "<?PHP echo base_url('word/add_collection')?>",
             type: 'post',
             dataType: 'JSON',//here
             data: {
                 username:'<?php echo $user_id;?>',
-                ban_word_id:ban_word,
+                add_word_id:add_word,
             },
             success: function (data) {
                 if(data.code == 0){
-                    alert('该单词将不会再次出现');
-                    clickButtonBye();
+                    alert('收藏成功!');
                 }else{
                     alert(data.msg);
                 }

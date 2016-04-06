@@ -118,21 +118,6 @@ class Word extends CI_Controller{
     }
 
     /**
-     *
-     */
-    public function word_list(){
-
-        //检查用户登录状态
-
-        //获取参数
-
-        //从cache里面取出用户用户列表
-
-        //传值给视图
-    }
-
-
-    /**
      *处理登陆用户
      */
     public function word_ini(){
@@ -148,11 +133,7 @@ class Word extends CI_Controller{
         $user_info_array = unserialize($user_info_list);
 
         if(empty($user_info_array)){
-            $user_info_array = array(
-                'days' => 0,
-                'last_accomplish_date' => '1970-01-01 00:00:00',
-                'cards_num' => 0,
-            );
+            $user_info_array = $this->initial_user_info_array($user);
         }
 
         $ban_list = $this->cache->get($this->user_ban_list_key.$user);
@@ -173,38 +154,6 @@ class Word extends CI_Controller{
             'ban_list' => $ban_array,
         );
         $this->load->view('word/word_ini',$data);
-    }
-
-    /**
-     *
-     */
-    public function text(){
-
-        //检查用户登录状态 0是游客
-        $user_id = $this->check_login();
-
-        $word_list = $this->word_model->get_random_word(7);
-
-        //推荐算法
-
-        /*
-         * 传给视图的值
-         *  浏览器头:MW_title
-         *  标题:MW_site_head
-         *  副标题:MW_site_subhead
-         *  用户id user_id
-         *  用户名:user_name
-         *
-         *  推荐单词列表 对象数组(word_obj)array()
-         * */
-
-        $data = array(
-            'user_id' => $user_id,
-            'now_display' => 0,
-            'word_list' => $word_list,
-        );
-
-        $this->load->view('word/index',$data);
     }
 
     /**
@@ -238,11 +187,15 @@ class Word extends CI_Controller{
             return $this->redirect('word/index');
         }
 
-        $word_list = $this->word_model->get_words_by_id_array($this->recommend_id_array($user_id,$word_num));
+        $user_info_list = $this->cache->get($this->user_info_key.$user_id);
+        $user_info_array = unserialize($user_info_list);
+        if(empty($user_info_array)){
+            $user_info_array = $this->initial_user_info_array();
+        }
+
+        $word_list = $this->word_model->get_words_by_id_array($this->order_id_array($user_id,$user_info_array['main_package_index'],$word_num));
 
         $ban_list = $this->cache->get($this->user_ban_list_key.$user_id);
-        //var_dump($ban_list);
-            //exit();
         $ban_array = $this->word_model->get_words_by_id_array(unserialize($ban_list));
         $data = array(
             'user_id'=>$user_id,
@@ -254,6 +207,9 @@ class Word extends CI_Controller{
         $this->load->view('word/word',$data);
     }
 
+    public function game(){
+        $this->load->view('word/pk');
+    }
 
 /*公有接口*/
 /**/
@@ -349,10 +305,17 @@ class Word extends CI_Controller{
 
     public function add_collection(){
         $user_id = $this->input->post('user_id');
+        $add_word_id = $this->input->post('add_word_id');
 
         $collect_list = $this->cache->get($this->user_collect_list_key.$user_id);
+        $collect_array = unserialize($collect_list);
 
-        $collect_array = $this->word_model->get_words_by_array(unserialize($collect_list));
+        if(!$collect_array){
+            $collect_array = array();
+        }
+
+        array_push($collect_array,$add_word_id);
+        $this->cache->save($this->user_collect_list_key.$user_id,serialize($collect_array),$this->cache_expire_time());
 
         return $this->send_json(true);
     }
@@ -374,7 +337,6 @@ class Word extends CI_Controller{
                         "</td><td>".$word->meaning."</td>".
                 "<td>".
                 "<a style='margin-right:2px' href='#'>撤回</a>".
-                "<a style='margin-right:2px' href='#'>有多远滚多远</a>".
                 "</td>".
                 "</tr>";
         }
@@ -397,11 +359,7 @@ class Word extends CI_Controller{
         $user_info_list = $this->cache->get($this->user_info_key.$user_id);
         $user_info_array = unserialize($user_info_list);
         if(empty($user_info_list)){
-            $user_info_array = array(
-                'days'=>0,
-                'cards_num'=>0,
-                'last_accomplish_date' => '1970-01-01 00:00:00',
-            );
+            $user_info_array = $this->initial_user_info_array();
         }
 
         if(date('Y-m-d') > date('Y-m-d',strtotime($user_info_array['last_accomplish_date']))){
@@ -417,66 +375,41 @@ class Word extends CI_Controller{
         return $this->send_json(true,$user_info_array['last_accomplish_date']);
     }
 
-    public function pk(){
-        set_time_limit(0);
-        ob_implicit_flush();
-//本地IP
-        $address = base_url('word/pk');
-//设置用111端口进行通信
-        $port = 111;
-//创建SOCKET
-        if (($sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP)) < 0) {
-            echo "socket创建失败原因 " . socket_strerror($sock) . "\n";
+    public function today_accomplish_modify_package_index(){
+        $user_id = $this->input->post('username');
+        $cards_num_plus = $this->input->post('cards_num');
+
+        if(empty($user_id)){
+            exit('用户超时,请重新登陆');
         }
 
-        if (($ret = socket_bind($sock, $address, $port)) < 0) {
-            echo "创建套接字失败原因 " . socket_strerror($ret) . "\n";
+        $user_info_list = $this->cache->get($this->user_info_key.$user_id);
+        $user_info_array = unserialize($user_info_list);
+        if(empty($user_info_list)){
+            $user_info_array = $this->initial_user_info_array();
         }
-//监听
-        if (($ret = socket_listen($sock, 5)) < 0) {
-            echo "监听失败原因 " . socket_strerror($ret) . "\n";
-        }
-        do {
-            //接收命令
-            if (($msgsock = @socket_accept($sock)) < 0) {
-                echo "命令接收失败原因: " . socket_strerror($msgsock) . "\n";
-                break;
-            }
-            $msg = "\nPHP Test Server. \n" ."用quit,shutdown,sun...等命令测试.\n";
 
-            @socket_write($msgsock, $msg, strlen($msg));
-
-            do {
-                if (false === ($buf = @socket_read($msgsock, 2048, PHP_NORMAL_READ))) {
-                    echo "socket_read() failed: reason: " . socket_strerror($ret) . "\n";
-                    break 2;
-                }
-                if (!$buf = trim($buf)) {
-                    continue;
-                }
-                if ($buf == 'quit') {
-                    break;
-                }
-                if ($buf == 'shutdown') {
-                    socket_close($msgsock);
-                    break 2;
-                }
-                if ($buf == 'sun') {
-                    echo'what are you doing?';
-                }
-                $talkback = "Backinformation : '$buf'.\n";
-                socket_write($msgsock, $talkback, strlen($talkback));
-                echo "$buf\n";
-            } while (true);
-
-            socket_close($msgsock);
-
-        } while (true);
-
-        socket_close($sock);
+        $user_info_array['main_package_index'] += $cards_num_plus;
+        $this->cache->save($this->user_info_key.$user_id,serialize($user_info_array),$this->cache_expire_time());
+        $this->send_json(true);
     }
 
+
+
 /*私有接口*/
+
+    private function order_id_array($user_id,$index,$num,$word_package = 1){
+        $word_id_list = $this->cache->get($this->user_words_repertory_key.$user_id);
+        $word_id_array = unserialize($word_id_list);
+
+        if(empty($word_id_list)){
+            $word_id_array = range(0,$this->ALL_WORDS_NUM-1);
+            $word_id_list = serialize($word_id_array);
+            $this->cache->save($this->user_words_repertory_key.$user_id,$word_id_list,$this->cache_expire_time());
+        }
+        $recommend_word_id_array = array_slice($word_id_array,$index,$num);
+        return $recommend_word_id_array;
+    }
 
     /**
      * 返回该用户的推荐单词列表 从user_id的repertory中选取num个数
@@ -510,6 +443,10 @@ class Word extends CI_Controller{
         $recommend_id_array = array_slice($word_id_array,0,$num);
 
         return $recommend_id_array;
+    }
+
+    private function initial_id_array(){
+        return range(0,$this->ALL_WORDS_NUM-1);
     }
 
 
@@ -549,6 +486,18 @@ class Word extends CI_Controller{
             return false;
         }
         return json_decode($last_list);
+    }
+
+    private function get_package_index($user_id,$package){
+
+        $user_info_list = $this->cache->get($this->user_info_key.$user_id);
+        $user_info_array = unserialize($user_info_list);
+
+        if(empty($user_info_array)){
+            $user_info_array = $this->initial_user_info_array($user_id);
+        }
+        var_dump($user_info_array);
+        return $user_info_array[$package.'_index'];
     }
 
     /**
@@ -656,6 +605,27 @@ class Word extends CI_Controller{
         return str_replace('/r/n','<br>',$str);
     }
 
+    private function initial_user_info_array($user_id){
+        $user_info_array = array(
+            'days'=>0,
+            'cards_num'=>0,
+            'last_accomplish_date' => '1970-01-01 00:00:00',
+            'main_package_index' => 0,
+            'cet_4_index' => 0,
+        );
+       $this->cache->save($this->user_info_key.$user_id,serialize($user_info_array),$this->cache_expire_time());
+        return $user_info_array;
+    }
+
+    private function log($msg){
+        $myfile = fopen('/Users/Cancel/Develop/apacheServer/MemoryWords/log/log.txt', "a+") or die("Unable to open file!");
+        date_default_timezone_set('PRC');
+        $time = date('Y-m-d H:i:s');
+
+        fwrite($myfile,"[".$time."]". $msg."\r\n");
+        fclose($myfile);
+    }
+
 /* 测试方法 */
     /**
      *
@@ -720,8 +690,8 @@ class Word extends CI_Controller{
 
         //var_dump(unserialize($this->cache->get($this->user_words_repertory_key.$user_id)));
         //var_dump(unserialize($this->cache->get($this->user_ban_list_key.$user_id)));
-        $num = '100*50';
-        echo (int)$num;
+        $this->cache->delete($this->user_info_key.$user_id);
+        $this->cache->delete($this->user_words_repertory_key.$user_id);
     }
 
     public function show_ban_list($user){
@@ -742,6 +712,8 @@ class Word extends CI_Controller{
     }
 
     public function clear_cache($user){
+        $this->cache->delete($this->user_info_key.$user);
+        $this->cache->delete($this->user_words_repertory_key.$user);
         $this->cache->delete($this->user_ban_list_key.$user);
         var_dump($this->user_ban_list_key.$user);
     }
